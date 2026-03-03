@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>🤖 Swarm Robot Simulation</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #080c10;
+  --panel: #0d1117;
+  --border: rgba(0,255,180,0.15);
+  --green: #00FFB4;
+  --yellow: #FFD700;
+  --red: #FF4444;
+  --blue: #00CFFF;
+  --orange: #FF8C00;
+  --text: #c9d1d9;
+  --muted: #444c56;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Grid background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,255,180,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,180,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(13,17,23,0.9);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--green);
+  letter-spacing: 0.05em;
+}
+
+.status-bar {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.status-item { display: flex; align-items: center; gap: 0.4rem; }
+.status-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+.status-dot.red { background: var(--red); animation: none; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.main-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr 280px;
+  gap: 0;
+  height: calc(100vh - 57px);
+}
+
+/* LEFT PANEL */
+.left-panel, .right-panel {
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  padding: 1.5rem 1rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.right-panel { border-right: none; border-left: 1px solid var(--border); }
+
+.panel-title {
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* CONTROLS */
+.control-group { display: flex; flex-direction: column; gap: 0.8rem; }
+
+.control-label {
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-bottom: 0.3rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.control-label span { color: var(--green); }
+
+input[type=range] {
+  width: 100%;
+  -webkit-appearance: none;
+  height: 3px;
+  background: var(--muted);
+  border-radius: 2px;
+  outline: none;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--green);
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(0,255,180,0.5);
+}
+
+.btn {
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--green);
+  background: transparent;
+  color: var(--green);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+  letter-spacing: 0.05em;
+  width: 100%;
+}
+
+.btn:hover { background: rgba(0,255,180,0.1); box-shadow: 0 0 15px rgba(0,255,180,0.2); }
+.btn.primary { background: var(--green); color: var(--bg); font-weight: 700; }
+.btn.primary:hover { background: #00e0a0; box-shadow: 0 0 20px rgba(0,255,180,0.4); }
+.btn.danger { border-color: var(--red); color: var(--red); }
+.btn.danger:hover { background: rgba(255,68,68,0.1); }
+
+/* SPEED CONTROL */
+.speed-btns { display: flex; gap: 0.4rem; }
+.speed-btn {
+  flex: 1;
+  padding: 0.4rem;
+  border: 1px solid var(--muted);
+  background: transparent;
+  color: var(--muted);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.7rem;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+.speed-btn.active { border-color: var(--green); color: var(--green); background: rgba(0,255,180,0.1); }
+
+/* SIMULATION CANVAS AREA */
+.sim-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+canvas {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 0 40px rgba(0,255,180,0.05), inset 0 0 40px rgba(0,0,0,0.5);
+  background: #050810;
+}
+
+.sim-stats {
+  display: flex;
+  gap: 2rem;
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.sim-stat strong { color: var(--green); font-size: 1rem; }
+
+/* PROGRESS BAR */
+.progress-wrap {
+  width: 100%;
+  margin-top: 0.8rem;
+  max-width: 600px;
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+
+.progress-bar {
+  height: 4px;
+  background: var(--muted);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green), #00cfff);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+  width: 0%;
+  box-shadow: 0 0 8px rgba(0,255,180,0.5);
+}
+
+/* AGENT CARDS */
+.agent-card {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.8rem;
+  font-size: 0.72rem;
+  transition: border-color 0.3s;
+}
+
+.agent-card.active { border-color: rgba(0,255,180,0.4); }
+.agent-card.failed { border-color: rgba(255,68,68,0.3); opacity: 0.6; }
+
+.agent-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.agent-name { color: var(--text); font-weight: 700; }
+.agent-status { font-size: 0.65rem; }
+.agent-status.alive { color: var(--green); }
+.agent-status.dead { color: var(--red); }
+.agent-status.working { color: var(--yellow); }
+
+.energy-bar {
+  height: 3px;
+  background: var(--muted);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 0.4rem;
+}
+
+.energy-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s, background 0.3s;
+}
+
+.agent-info { color: var(--muted); margin-top: 0.3rem; }
+
+/* LOG */
+.log-container {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.8rem;
+  height: 220px;
+  overflow-y: auto;
+  font-size: 0.68rem;
+  line-height: 1.8;
+}
+
+.log-entry { display: flex; gap: 0.5rem; }
+.log-time { color: var(--muted); flex-shrink: 0; }
+.log-msg.success { color: var(--green); }
+.log-msg.warning { color: var(--yellow); }
+.log-msg.error { color: var(--red); }
+.log-msg.info { color: var(--blue); }
+
+/* METRICS */
+.metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+
+.metric-card {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.8rem;
+  text-align: center;
+}
+
+.metric-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--green);
+  line-height: 1;
+}
+
+.metric-lbl { font-size: 0.62rem; color: var(--muted); margin-top: 0.3rem; }
+
+/* LEGEND */
+.legend { display: flex; flex-direction: column; gap: 0.5rem; }
+.legend-item { display: flex; align-items: center; gap: 0.7rem; font-size: 0.7rem; color: var(--muted); }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+@media (max-width: 900px) {
+  .main-layout { grid-template-columns: 1fr; }
+  .left-panel, .right-panel { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">⬡ SWARM.SIM // ACO MULTI-AGENT</div>
+  <div class="status-bar">
+    <div class="status-item"><div class="status-dot" id="sysStatus"></div><span id="sysLabel">READY</span></div>
+    <div class="status-item">STEP: <span id="headerStep" style="color:var(--green)">0</span></div>
+    <div class="status-item">TASKS: <span id="headerTasks" style="color:var(--green)">0/0</span></div>
+  </div>
+</header>
+
+<div class="main-layout">
+
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <div>
+      <div class="panel-title">// SIM CONFIG</div>
+      <div class="control-group">
+        <div>
+          <div class="control-label">AGENTS <span id="agentVal">6</span></div>
+          <input type="range" id="agentSlider" min="2" max="12" value="6" oninput="document.getElementById('agentVal').textContent=this.value">
+        </div>
+        <div>
+          <div class="control-label">TASKS <span id="taskVal">10</span></div>
+          <input type="range" id="taskSlider" min="4" max="20" value="10" oninput="document.getElementById('taskVal').textContent=this.value">
+        </div>
+        <div>
+          <div class="control-label">FAILURE PROB <span id="failVal">5%</span></div>
+          <input type="range" id="failSlider" min="0" max="20" value="5" oninput="document.getElementById('failVal').textContent=this.value+'%'">
+        </div>
+        <div>
+          <div class="control-label">SPEED <span id="speedVal">1x</span></div>
+          <input type="range" id="speedSlider" min="1" max="5" value="2" oninput="document.getElementById('speedVal').textContent=this.value+'x'">
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel-title">// ACO PARAMS</div>
+      <div class="control-group">
+        <div>
+          <div class="control-label">ALPHA (pheromone) <span id="alphaVal">1.0</span></div>
+          <input type="range" id="alphaSlider" min="1" max="30" value="10" oninput="document.getElementById('alphaVal').textContent=(this.value/10).toFixed(1)">
+        </div>
+        <div>
+          <div class="control-label">BETA (heuristic) <span id="betaVal">2.0</span></div>
+          <input type="range" id="betaSlider" min="1" max="50" value="20" oninput="document.getElementById('betaVal').textContent=(this.value/10).toFixed(1)">
+        </div>
+        <div>
+          <div class="control-label">EVAPORATION <span id="evapVal">0.10</span></div>
+          <input type="range" id="evapSlider" min="1" max="50" value="10" oninput="document.getElementById('evapVal').textContent=(this.value/100).toFixed(2)">
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:0.5rem;">
+      <button class="btn primary" onclick="startSim()">▶ START SIMULATION</button>
+      <button class="btn" onclick="pauseSim()" id="pauseBtn">⏸ PAUSE</button>
+      <button class="btn danger" onclick="resetSim()">↺ RESET</button>
+    </div>
+
+    <div>
+      <div class="panel-title">// LEGEND</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#00FFB4"></div>Active Robot Agent</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#FF4444"></div>Failed Agent</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#FFD700; border-radius:2px"></div>Pending Task (⭐ = priority)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#333"></div>Completed Task</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(0,207,255,0.3); border-radius:1px"></div>Pheromone Trail</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CANVAS -->
+  <div class="sim-area">
+    <canvas id="simCanvas"></canvas>
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>TASK COMPLETION</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <div class="sim-stats">
+      <div class="sim-stat">STEP <strong id="stepCount">0</strong></div>
+      <div class="sim-stat">COMPLETED <strong id="completedCount">0</strong></div>
+      <div class="sim-stat">ALIVE <strong id="aliveCount">0</strong></div>
+      <div class="sim-stat">PHEROMONE AVG <strong id="pheroAvg">0.00</strong></div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div>
+      <div class="panel-title">// METRICS</div>
+      <div class="metric-grid">
+        <div class="metric-card">
+          <div class="metric-val" id="mCompleted">0</div>
+          <div class="metric-lbl">COMPLETED</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val" id="mRate" style="color:var(--yellow)">0%</div>
+          <div class="metric-lbl">SUCCESS RATE</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val" id="mAlive" style="color:var(--blue)">0</div>
+          <div class="metric-lbl">AGENTS ALIVE</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val" id="mSteps" style="color:var(--orange)">0</div>
+          <div class="metric-lbl">STEPS</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel-title">// AGENT STATUS</div>
+      <div id="agentCards" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
+    </div>
+
+    <div>
+      <div class="panel-title">// ACTIVITY LOG</div>
+      <div class="log-container" id="logBox"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// SWARM SIMULATION ENGINE
+// ═══════════════════════════════════════════
+
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+
+// Config
+let CFG = {};
+let agents = [], tasks = [], pheromones = {};
+let step = 0, running = false, paused = false;
+let animTimer = null;
+let completedCount = 0;
+
+const AGENT_COLORS = ['#00FFB4','#00CFFF','#FFD700','#FF8C00','#FF69B4','#A78BFA','#34D399','#F87171','#60A5FA','#FBBF24','#E879F9','#4ADE80'];
+
+// ── INIT
+function initSim() {
+  CFG = {
+    gridSize: 20,
+    numAgents: +document.getElementById('agentSlider').value,
+    numTasks: +document.getElementById('taskSlider').value,
+    failureProb: +document.getElementById('failSlider').value / 100,
+    speed: +document.getElementById('speedSlider').value,
+    alpha: +document.getElementById('alphaSlider').value / 10,
+    beta: +document.getElementById('betaSlider').value / 10,
+    evaporation: +document.getElementById('evapSlider').value / 100,
+  };
+
+  // Fit canvas
+  const area = document.querySelector('.sim-area');
+  const size = Math.min(area.clientWidth - 40, area.clientHeight - 100, 560);
+  canvas.width = canvas.height = size;
+
+  step = 0; completedCount = 0;
+
+  // Create tasks
+  tasks = Array.from({length: CFG.numTasks}, (_, i) => ({
+    id: i,
+    x: 1 + Math.floor(Math.random() * (CFG.gridSize - 2)),
+    y: 1 + Math.floor(Math.random() * (CFG.gridSize - 2)),
+    priority: 1 + Math.floor(Math.random() * 5),
+    effort: 5 + Math.floor(Math.random() * 15),
+    done: false,
+    assigned: false,
+    completedAt: null,
+  }));
+
+  // Create agents
+  agents = Array.from({length: CFG.numAgents}, (_, i) => ({
+    id: i,
+    x: Math.random() * CFG.gridSize,
+    y: Math.random() * CFG.gridSize,
+    energy: 60 + Math.random() * 40,
+    alive: true,
+    task: null,
+    completed: 0,
+    capability: 0.6 + Math.random() * 0.4,
+    color: AGENT_COLORS[i % AGENT_COLORS.length],
+    trail: [],  // position history for trail effect
+  }));
+
+  // Pheromones
+  pheromones = {};
+  tasks.forEach(t => pheromones[t.id] = 1.0);
+
+  document.getElementById('aliveCount').textContent = CFG.numAgents;
+  document.getElementById('mAlive').textContent = CFG.numAgents;
+  document.getElementById('headerTasks').textContent = `0/${CFG.numTasks}`;
+
+  buildAgentCards();
+  clearLog();
+  addLog('SYS', `Simulation initialized. ${CFG.numAgents} agents, ${CFG.numTasks} tasks.`, 'info');
+  draw();
+}
+
+// ── PHEROMONE
+function evaporate() {
+  tasks.forEach(t => {
+    pheromones[t.id] *= (1 - CFG.evaporation);
+    pheromones[t.id] = Math.max(0.1, pheromones[t.id]);
+  });
+}
+
+function deposit(task, success) {
+  const reward = task.priority * (success ? 1.5 : 0.3);
+  pheromones[task.id] = Math.min(10, pheromones[task.id] + reward);
+}
+
+// ── TASK SELECTION (ACO)
+function selectTask(agent) {
+  const available = tasks.filter(t => !t.done && !t.assigned);
+  if (!available.length) return null;
+
+  const scores = available.map(t => {
+    const dist = Math.max(0.1, Math.hypot(agent.x - t.x, agent.y - t.y));
+    const pher = Math.pow(pheromones[t.id], CFG.alpha);
+    const heur = Math.pow(t.priority / dist, CFG.beta);
+    return pher * heur;
+  });
+
+  const total = scores.reduce((a, b) => a + b, 0);
+  const probs = scores.map(s => s / total);
+
+  // Roulette wheel selection
+  let rand = Math.random(), cumulative = 0;
+  for (let i = 0; i < available.length; i++) {
+    cumulative += probs[i];
+    if (rand <= cumulative) return available[i];
+  }
+  return available[available.length - 1];
+}
+
+// ── STEP
+function simStep() {
+  step++;
+  evaporate();
+
+  let aliveCount = 0;
+
+  agents.forEach(agent => {
+    if (!agent.alive) return;
+    aliveCount++;
+
+    // Random failure
+    if (Math.random() < CFG.failureProb) {
+      agent.alive = false;
+      if (agent.task) { agent.task.assigned = false; agent.task = null; }
+      addLog(`S${step.toString().padStart(2,'0')}`, `Agent ${agent.id} FAILED unexpectedly!`, 'error');
+      return;
+    }
+
+    // Assign task
+    if (!agent.task) {
+      agent.task = selectTask(agent);
+      if (agent.task) {
+        agent.task.assigned = true;
+        addLog(`S${step.toString().padStart(2,'0')}`, `Agent ${agent.id} → Task ${agent.task.id} (P${agent.task.priority})`, 'info');
+      }
+    }
+
+    // Move toward task
+    if (agent.task) {
+      const dx = agent.task.x - agent.x;
+      const dy = agent.task.y - agent.y;
+      const dist = Math.hypot(dx, dy);
+      const speed = 0.4 * agent.capability;
+
+      // Record trail
+      agent.trail.push({x: agent.x, y: agent.y});
+      if (agent.trail.length > 12) agent.trail.shift();
+
+      if (dist > 0.5) {
+        agent.x += (dx / dist) * speed;
+        agent.y += (dy / dist) * speed;
+      }
+
+      // Energy drain
+      agent.energy -= agent.task.effort * (1 / agent.capability) * 0.015;
+
+      // Reached task
+      if (dist < 0.8) {
+        if (agent.energy > 5) {
+          agent.task.done = true;
+          agent.task.completedAt = step;
+          deposit(agent.task, true);
+          agent.completed++;
+          completedCount++;
+          addLog(`S${step.toString().padStart(2,'0')}`, `✓ Agent ${agent.id} completed Task ${agent.task.id}!`, 'success');
+          agent.task = null;
+        } else {
+          deposit(agent.task, false);
+          agent.task.assigned = false;
+          agent.task = null;
+        }
+      }
+
+      // Energy depletion
+      if (agent.energy <= 0) {
+        agent.alive = false;
+        agent.energy = 0;
+        if (agent.task) { agent.task.assigned = false; agent.task = null; }
+        addLog(`S${step.toString().padStart(2,'0')}`, `Agent ${agent.id} out of energy!`, 'warning');
+      }
+    }
+  });
+
+  updateUI(aliveCount);
+  draw();
+
+  // Check completion
+  const allDone = tasks.every(t => t.done);
+  const noAgents = aliveCount === 0;
+
+  if (allDone) {
+    addLog('SYS', `🎉 ALL TASKS COMPLETE in ${step} steps!`, 'success');
+    stopSim();
+    document.getElementById('sysLabel').textContent = 'COMPLETE';
+  } else if (noAgents) {
+    addLog('SYS', `All agents failed. Mission incomplete.`, 'error');
+    stopSim();
+    document.getElementById('sysLabel').textContent = 'FAILED';
+    document.getElementById('sysStatus').classList.add('red');
+  }
+}
+
+// ── DRAW
+function cellSize() { return canvas.width / CFG.gridSize; }
+
+function draw() {
+  const cs = cellSize();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Background
+  ctx.fillStyle = '#050810';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(0,255,180,0.04)';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= CFG.gridSize; i++) {
+    ctx.beginPath(); ctx.moveTo(i * cs, 0); ctx.lineTo(i * cs, canvas.height); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, i * cs); ctx.lineTo(canvas.width, i * cs); ctx.stroke();
+  }
+
+  // Pheromone overlay
+  tasks.forEach(t => {
+    if (t.done) return;
+    const intensity = Math.min(pheromones[t.id] / 10, 1);
+    const radius = cs * 2.5 * intensity;
+    const grd = ctx.createRadialGradient(
+      (t.x + 0.5) * cs, (t.y + 0.5) * cs, 0,
+      (t.x + 0.5) * cs, (t.y + 0.5) * cs, radius
+    );
+    grd.addColorStop(0, `rgba(0,207,255,${0.08 * intensity})`);
+    grd.addColorStop(1, 'transparent');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  });
+
+  // Agent trails
+  agents.forEach(agent => {
+    if (!agent.alive || agent.trail.length < 2) return;
+    for (let i = 1; i < agent.trail.length; i++) {
+      const alpha = (i / agent.trail.length) * 0.3;
+      ctx.strokeStyle = agent.color.replace(')', `,${alpha})`).replace('rgb', 'rgba');
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo((agent.trail[i-1].x + 0.5) * cs, (agent.trail[i-1].y + 0.5) * cs);
+      ctx.lineTo((agent.trail[i].x + 0.5) * cs, (agent.trail[i].y + 0.5) * cs);
+      ctx.stroke();
+    }
+  });
+
+  // Draw lines from agent to target task
+  agents.forEach(agent => {
+    if (!agent.alive || !agent.task) return;
+    ctx.strokeStyle = agent.color.replace(')', ',0.15)').replace('rgb','rgba');
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 5]);
+    ctx.beginPath();
+    ctx.moveTo((agent.x + 0.5) * cs, (agent.y + 0.5) * cs);
+    ctx.lineTo((agent.task.x + 0.5) * cs, (agent.task.y + 0.5) * cs);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  // Draw tasks
+  tasks.forEach(t => {
+    const cx = (t.x + 0.5) * cs;
+    const cy = (t.y + 0.5) * cs;
+    const size = cs * 0.35;
+
+    if (t.done) {
+      // Completed task - grey checkmark
+      ctx.fillStyle = '#1a1a1a';
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.rect(cx - size, cy - size, size*2, size*2);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#444';
+      ctx.font = `${cs * 0.4}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('✓', cx, cy);
+    } else {
+      // Pending task
+      const pulse = 0.85 + 0.15 * Math.sin(Date.now() / 400 + t.id);
+      ctx.fillStyle = `rgba(255,215,0,${0.15 * pulse})`;
+      ctx.strokeStyle = `rgba(255,215,0,${0.8 * pulse})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.rect(cx - size, cy - size, size*2, size*2);
+      ctx.fill(); ctx.stroke();
+
+      // Priority stars
+      ctx.fillStyle = '#FFD700';
+      ctx.font = `bold ${cs * 0.32}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`P${t.priority}`, cx, cy);
+    }
+  });
+
+  // Draw agents
+  agents.forEach(agent => {
+    const cx = (agent.x + 0.5) * cs;
+    const cy = (agent.y + 0.5) * cs;
+    const r = cs * 0.38;
+
+    if (!agent.alive) {
+      // Dead agent - X mark
+      ctx.strokeStyle = 'rgba(255,68,68,0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(cx-r*0.6, cy-r*0.6); ctx.lineTo(cx+r*0.6, cy+r*0.6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx+r*0.6, cy-r*0.6); ctx.lineTo(cx-r*0.6, cy+r*0.6); ctx.stroke();
+      return;
+    }
+
+    // Glow
+    const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 2);
+    glow.addColorStop(0, agent.color.replace(')', ',0.2)').replace('rgb','rgba'));
+    glow.addColorStop(1, 'transparent');
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(cx, cy, r * 2, 0, Math.PI * 2); ctx.fill();
+
+    // Robot body
+    ctx.fillStyle = agent.color;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    // Agent ID
+    ctx.fillStyle = '#000';
+    ctx.font = `bold ${cs * 0.28}px monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(agent.id, cx, cy);
+
+    // Energy ring
+    const energyAngle = (agent.energy / 100) * Math.PI * 2;
+    ctx.strokeStyle = agent.energy > 40 ? '#00FFB4' : agent.energy > 20 ? '#FFD700' : '#FF4444';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + 4, -Math.PI/2, -Math.PI/2 + energyAngle);
+    ctx.stroke();
+  });
+}
+
+// ── UI UPDATES
+function updateUI(aliveCount) {
+  const pct = Math.round(completedCount / CFG.numTasks * 100);
+  document.getElementById('stepCount').textContent = step;
+  document.getElementById('completedCount').textContent = completedCount;
+  document.getElementById('aliveCount').textContent = aliveCount;
+  document.getElementById('headerStep').textContent = step;
+  document.getElementById('headerTasks').textContent = `${completedCount}/${CFG.numTasks}`;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('mCompleted').textContent = completedCount;
+  document.getElementById('mRate').textContent = pct + '%';
+  document.getElementById('mAlive').textContent = aliveCount;
+  document.getElementById('mSteps').textContent = step;
+
+  const avgPhero = tasks.length ? (Object.values(pheromones).reduce((a,b)=>a+b,0)/tasks.length).toFixed(2) : '0.00';
+  document.getElementById('pheroAvg').textContent = avgPhero;
+
+  // Update agent cards
+  agents.forEach(agent => {
+    const card = document.getElementById(`acard-${agent.id}`);
+    if (!card) return;
+    const statusEl = card.querySelector('.agent-status');
+    const energyFill = card.querySelector('.energy-fill');
+    const infoEl = card.querySelector('.agent-info');
+
+    card.className = `agent-card ${agent.alive ? (agent.task ? 'active' : '') : 'failed'}`;
+    statusEl.textContent = agent.alive ? (agent.task ? `→ T${agent.task.id}` : 'IDLE') : 'FAILED';
+    statusEl.className = `agent-status ${agent.alive ? (agent.task ? 'working' : 'alive') : 'dead'}`;
+
+    const ep = Math.max(0, agent.energy);
+    energyFill.style.width = ep + '%';
+    energyFill.style.background = ep > 40 ? '#00FFB4' : ep > 20 ? '#FFD700' : '#FF4444';
+    infoEl.textContent = `Done: ${agent.completed} | E: ${ep.toFixed(0)}`;
+  });
+}
+
+function buildAgentCards() {
+  const container = document.getElementById('agentCards');
+  container.innerHTML = '';
+  agents.forEach(agent => {
+    const div = document.createElement('div');
+    div.className = 'agent-card';
+    div.id = `acard-${agent.id}`;
+    div.innerHTML = `
+      <div class="agent-header">
+        <span class="agent-name" style="color:${agent.color}">◉ AGENT ${agent.id}</span>
+        <span class="agent-status alive">IDLE</span>
+      </div>
+      <div class="energy-bar"><div class="energy-fill" style="width:${agent.energy}%;background:#00FFB4"></div></div>
+      <div class="agent-info">Done: 0 | E: ${agent.energy.toFixed(0)}</div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+// ── LOG
+function addLog(time, msg, type='info') {
+  const box = document.getElementById('logBox');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `<span class="log-time">[${time}]</span><span class="log-msg ${type}">${msg}</span>`;
+  box.appendChild(entry);
+  box.scrollTop = box.scrollHeight;
+  if (box.children.length > 80) box.removeChild(box.children[0]);
+}
+
+function clearLog() { document.getElementById('logBox').innerHTML = ''; }
+
+// ── CONTROLS
+function startSim() {
+  if (running) return;
+  initSim();
+  running = true; paused = false;
+  document.getElementById('sysLabel').textContent = 'RUNNING';
+  document.getElementById('sysStatus').classList.remove('red');
+  addLog('SYS', 'Simulation started.', 'success');
+
+  function loop() {
+    if (!running || paused) return;
+    const speed = +document.getElementById('speedSlider').value;
+    for (let i = 0; i < speed && running; i++) simStep();
+    if (running) animTimer = requestAnimationFrame(loop);
+  }
+  animTimer = requestAnimationFrame(loop);
+}
+
+function pauseSim() {
+  if (!running) return;
+  paused = !paused;
+  document.getElementById('pauseBtn').textContent = paused ? '▶ RESUME' : '⏸ PAUSE';
+  document.getElementById('sysLabel').textContent = paused ? 'PAUSED' : 'RUNNING';
+  if (!paused) {
+    function loop() {
+      if (!running || paused) return;
+      const speed = +document.getElementById('speedSlider').value;
+      for (let i = 0; i < speed && running; i++) simStep();
+      if (running) animTimer = requestAnimationFrame(loop);
+    }
+    animTimer = requestAnimationFrame(loop);
+  }
+}
+
+function stopSim() {
+  running = false;
+  if (animTimer) cancelAnimationFrame(animTimer);
+}
+
+function resetSim() {
+  stopSim();
+  paused = false;
+  document.getElementById('pauseBtn').textContent = '⏸ PAUSE';
+  document.getElementById('sysLabel').textContent = 'READY';
+  document.getElementById('sysStatus').classList.remove('red');
+  initSim();
+}
+
+// ── INIT ON LOAD
+window.addEventListener('load', () => {
+  initSim();
+  // Animate draw loop even when not running
+  function idleLoop() { if (!running) draw(); requestAnimationFrame(idleLoop); }
+  requestAnimationFrame(idleLoop);
+});
+
+window.addEventListener('resize', () => { if (!running) initSim(); });
+</script>
+</body>
+</html>
