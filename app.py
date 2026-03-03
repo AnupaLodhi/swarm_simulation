@@ -1,4 +1,4 @@
-iimport streamlit as st
+import streamlit as st
 import matplotlib
 matplotlib.use('Agg')
 import os
