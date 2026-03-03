@@ -232,7 +232,7 @@ This project was developed as part of an **academic major project** to demonstra
 ## 📬 Connect
 
 **Anupa Lodhi**
-- 🔗 LinkedIn: [linkedin.com/in/anupa-lodhi](https://linkedin.com/in/anupa-lodhi)
+- 🔗 LinkedIn: [linkedin.com/in/anupa-lodhi]([https://linkedin.com/in/anupa-lodhi](https://www.linkedin.com/in/anupalodhi12a/))
 - 💻 GitHub: [github.com/AnupaLodhi](https://github.com/AnupaLodhi)
 
 ---
