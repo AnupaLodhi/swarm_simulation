@@ -1,240 +1,173 @@
-# 🤖 Adaptive Swarm-Based Cooperative Task Allocation
-### Using Computational Intelligence (ACO-Inspired Multi-Agent Simulation)
+# 🐜 Swarm Intelligence — PSO-Based Multi-Agent Simulation
 
-![Python](https://img.shields.io/badge/Python-3.8+-blue?style=for-the-badge&logo=python)
-![Streamlit](https://img.shields.io/badge/Streamlit-Live-FF4B4B?style=for-the-badge&logo=streamlit)
-![NumPy](https://img.shields.io/badge/NumPy-Scientific-013243?style=for-the-badge&logo=numpy)
-![Type](https://img.shields.io/badge/Type-AI%20Simulation-green?style=for-the-badge)
-![Status](https://img.shields.io/badge/Status-Completed-brightgreen?style=for-the-badge)
+> A fully interactive, browser-based simulation of Swarm Intelligence using a Particle Swarm Optimization (PSO)-inspired algorithm on a 2D grid. Built with pure HTML, CSS, and JavaScript — no libraries, no frameworks.
 
----
+![Swarm Intelligence Demo](https://img.shields.io/badge/Demo-Live-brightgreen) ![Language](https://img.shields.io/badge/Language-HTML%20%2F%20JS-orange) ![Algorithm](https://img.shields.io/badge/Algorithm-PSO-blue) ![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
-## 📌 Project Overview
 
-This project implements a **decentralized, adaptive swarm intelligence system** for cooperative task allocation among multiple autonomous agents in a dynamic 2D simulated environment.
 
-Inspired by **Ant Colony Optimization (ACO)**, agents independently evaluate and select tasks using pheromone trails, priority scores, and distance metrics — without any centralized controller.
+Live Demo
 
-The system also simulates **real-world challenges** like agent failure and energy depletion, demonstrating fault tolerance and adaptive reassignment.
+[View Live Site](https://anupalodhi.github.io/swarm_intelligent/)]
 
-> **Core Idea:** Multiple autonomous agents cooperate like a swarm of ants — no single leader, no central control — yet tasks get completed efficiently through collective intelligence.
+
+## 📌 What Is Swarm Intelligence?
+
+Swarm Intelligence is a field of AI where a group of **simple, autonomous agents** — each following basic local rules — collectively produce **complex, intelligent behavior** without any central controller.
+
+> Think of it like an ant colony. Each ant is "dumb" — it only knows what's directly around it. But together, 500,000 ants can build cities, farm food, and solve the shortest-path problem. That's swarm intelligence.
 
 ---
 
-## 🎯 Objectives
+## 🧠 Algorithm Used — PSO (Particle Swarm Optimization)
 
-| Objective | Description |
-|-----------|-------------|
-| Decentralized Allocation | Agents select tasks independently using swarm logic |
-| Adaptive Learning | Pheromone feedback adjusts future task selection |
-| Fault Tolerance | System continues even when agents fail |
-| Performance Evaluation | Metrics tracked across every simulation step |
-
----
-
-## 🧠 How It Works
-
-### ACO-Inspired Task Selection Formula
-
-Each agent scores available tasks using:
+Each agent updates its velocity every iteration using three forces:
 
 ```
-Score = Pheromone^α × (Priority / Distance)^β
+v(t+1) = ω · v(t) + c₁ · r₁ · (pBest - x) + c₂ · r₂ · (target - x)
 ```
 
 | Symbol | Meaning |
 |--------|---------|
-| α (Alpha) | Pheromone influence weight |
-| β (Beta) | Heuristic (priority/distance) influence |
-| Pheromone | Increases on success, evaporates over time |
-| Priority | Task urgency level (1–5) |
-| Distance | Euclidean distance from agent to task |
-
-Tasks are then **probabilistically selected** — higher scores = higher chance of selection.
+| `ω` | Inertia weight — keeps agent moving in current direction |
+| `c₁` | Cognitive coefficient — pulls toward agent's personal best |
+| `c₂` | Social coefficient — pulls toward nearest task |
+| `r₁, r₂` | Random values (0 to 1) for stochasticity |
+| `pBest` | Agent's personal best position so far |
+| `target` | Nearest live task on the grid |
 
 ---
 
-## ⚙️ System Architecture
+## 🗂️ Project Structure
 
 ```
-┌─────────────────────────────────────────┐
-│           SIMULATION ENGINE             │
-│                                         │
-│  ┌─────────────┐   ┌─────────────────┐  │
-│  │ Task Module │   │  Agent Module   │  │
-│  │  - Priority │   │  - Energy       │  │
-│  │  - Location │   │  - Capability   │  │
-│  │  - Effort   │   │  - Position     │  │
-│  └──────┬──────┘   └────────┬────────┘  │
-│         │                   │           │
-│         ▼                   ▼           │
-│  ┌─────────────────────────────────┐    │
-│  │     Swarm Intelligence Module   │    │
-│  │  - Pheromone Trails             │    │
-│  │  - ACO Task Scoring             │    │
-│  │  - Probabilistic Selection      │    │
-│  └─────────────┬───────────────────┘    │
-│                │                        │
-│                ▼                        │
-│  ┌─────────────────────────────────┐    │
-│  │   Feedback & Adaptation Module  │    │
-│  │  - Pheromone Deposit (success)  │    │
-│  │  - Pheromone Evaporation        │    │
-│  │  - Agent Failure Handling       │    │
-│  └─────────────────────────────────┘    │
-└─────────────────────────────────────────┘
+swarm-intelligence/
+│
+├── index.html       ← Complete simulation + web page (single file)
+└── README.md        ← This file
 ```
 
 ---
 
-## 📊 Simulation Results
+## ⚙️ Simulation Parameters
 
-> ▶️ Run the simulation first, then upload `swarm_results.png` to your GitHub repo to see the chart here.
+| Parameter | Default | Range | Description |
+|-----------|---------|-------|-------------|
+| Grid Size | 52 × 30 | Fixed | 2D environment space |
+| Agents | 15 | 3 – 30 | Number of autonomous agents |
+| Tasks | 10 | 3 – 20 | Number of target objectives |
+| Inertia (ω) | 0.5 | — | Velocity carry-over weight |
+| Cognitive (c₁) | 1.5 | — | Personal best attraction |
+| Social (c₂) | 1.8 | — | Target attraction strength |
+| Max Speed | 2.8 | — | Velocity clamp per iteration |
 
-![Simulation Results](swarm_results.png)
+All parameters except grid size are adjustable live in the browser.
 
 ---
 
-## 📊 Performance Metrics Tracked
+## 🔄 How It Works — Step by Step
+
+```
+1. Initialize agents randomly on the 2D grid
+2. Place task nodes at random positions
+3. For each iteration:
+   a. Each agent finds its nearest alive task
+   b. Updates velocity using PSO formula
+   c. Clamps speed to max limit
+   d. Moves to new position
+   e. Checks if close enough to complete a task
+4. Repeat until all tasks are completed
+5. Log completion events and display metrics
+```
+
+---
+
+## 🌍 Real-World Applications
+
+| Domain | Application | Outcome |
+|--------|------------|---------|
+| 🚁 Drones | Search & Rescue after disasters | Parallel area coverage, no central coordinator |
+| 📦 Logistics | Amazon Kiva warehouse robots | 4× faster order processing |
+| 🚦 Traffic | Smart city traffic light control | 25% less travel time |
+| 🔬 Medicine | Nanobot drug delivery swarms | Targeted tumor treatment |
+| 🌐 Networks | Internet packet routing | Self-healing, millisecond rerouting |
+| 📈 Finance | Quantitative trading optimization | Parallel parameter space exploration |
+
+---
+
+## ✅ Key Properties Demonstrated
+
+- **Decentralization** — No central controller; each agent decides independently
+- **Self-Organization** — Order emerges from local interactions
+- **Fault Tolerance** — Removing agents doesn't break the system
+- **Scalability** — Add more agents without changing the algorithm
+- **Collective Intelligence** — Group solves what individuals cannot
+
+---
+
+## 🚀 How to Run
+
+### Option 1 — Run locally
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/swarm-intelligence.git
+
+# Open in browser
+open index.html
+```
+
+### Option 2 — View on GitHub Pages
+Just visit the live link above — no installation needed.
+
+---
+
+## 🛠️ Built With
+
+- **Pure HTML5** — Structure and layout
+- **Vanilla JavaScript** — PSO simulation engine
+- **HTML5 Canvas** — Real-time 2D rendering
+- **CSS3** — Animations and responsive design
+- **Google Fonts** — Syne + DM Sans typography
+
+No npm. No build step. No dependencies. Just open and run.
+
+---
+
+## 📊 Performance Metrics
 
 | Metric | Description |
 |--------|-------------|
-| ✅ Task Completion Rate | % of tasks completed out of total |
-| ⚡ Energy Consumption | Average agent energy per step |
-| 🤖 Agent Survival Rate | Agents alive vs failed over time |
-| ⏱️ Completion Time | Step at which each task was completed |
-| 📈 Cumulative Progress | Tasks completed over simulation steps |
+| Task Completion Time | Iterations needed to complete all tasks |
+| Scalability | Linear — works with 3 to 30+ agents |
+| Fault Tolerance | No single point of failure |
+| Convergence | Agents self-organize within first 50 iterations typically |
 
 ---
 
-## 🛠️ Technology Stack
+## 🔬 Possible Extensions
 
-| Category | Tool |
-|----------|------|
-| Language | Python 3.8+ |
-| Simulation | NumPy, Random |
-| Visualization | Matplotlib |
-| Web Interface | Streamlit |
-| Algorithm | ACO (Ant Colony Optimization) |
-
----
-
-## 📁 Project Structure
-
-```
-swarm_simulation/
-│
-├── swarm_simulation.py   # Core simulation engine
-│                         # (Task, Agent, SwarmIntelligence, Simulation)
-│
-├── app.py                # Streamlit web interface
-│
-├── requirements.txt      # Python dependencies
-│
-├── swarm_results.png     # Auto-generated results chart
-│
-└── README.md             # Project documentation
-```
+- [ ] Add **Ant Colony Optimization (ACO)** with pheromone trails
+- [ ] Implement **Boids flocking** behavior (separation, alignment, cohesion)
+- [ ] Add **obstacles** on the grid for path-finding scenarios
+- [ ] PSO vs ACO **side-by-side comparison**
+- [ ] Export simulation data as **CSV for analysis**
+- [ ] Add **adaptive learning** — agents improve inertia over time
 
 ---
 
-## ▶️ How to Run Locally
+## 👨‍💻 Author
 
-**1. Clone the repository**
-```bash
-git clone https://github.com/AnupaLodhi/swarm_simulation.git
-cd swarm_simulation
-```
-
-**2. Install dependencies**
-```bash
-pip install -r requirements.txt
-```
-
-**3. Run simulation directly**
-```bash
-python swarm_simulation.py
-```
-
-**4. Or run as Streamlit app**
-```bash
-streamlit run app.py
-```
+Anupa Lodhi
+B.Tech CSE — Artificial Intelligence  
+[GitHub](https://github.com/AnupaLodhi) · [LinkedIn](https://linkedin.com/in/anupalodhi12a/)
 
 ---
 
-## 🌐 Live Demo
+## 📄 License
 
-🔗 **[View Live App on Streamlit →](https://anupalodhi-swarm-simulation.streamlit.app)**
-
----
-
-## 📈 Sample Output
-
-```
-=======================================================
-  🤖 ADAPTIVE SWARM SIMULATION STARTING
-=======================================================
-  Agents: 6 | Tasks: 12 | Grid: 20x20
-=======================================================
-  ✅ Step 03 | Agent 2 completed Task 4 (priority=5)
-  ✅ Step 05 | Agent 0 completed Task 7 (priority=3)
-  ⚠️  Step 06 | Agent 4 FAILED!
-  ✅ Step 08 | Agent 1 completed Task 2 (priority=4)
-  🔋 Step 12 | Agent 3 ran out of energy!
-  ...
-  🎉 All tasks completed at step 38!
-=======================================================
-  📊 SIMULATION SUMMARY
-=======================================================
-  Total Steps Run     : 39
-  Tasks Completed     : 12 / 12
-  Completion Rate     : 100%
-  Agents Alive        : 4 / 6
-=======================================================
-```
+This project is licensed under the **MIT License** — free to use, modify, and distribute.
 
 ---
 
-## 🔬 Key Concepts Demonstrated
-
-- **Swarm Intelligence** — collective behavior without central control
-- **Ant Colony Optimization (ACO)** — pheromone-based decision making
-- **Multi-Agent Systems** — independent agents with shared environment
-- **Fault Tolerance** — task reallocation on agent failure
-- **Adaptive Learning** — pheromone feedback improves future decisions
-- **Probabilistic Selection** — exploration vs exploitation balance
-
----
-
-## 🚀 Future Enhancements
-
-- Compare ACO vs PSO vs Genetic Algorithm performance
-- Add obstacle avoidance in the 2D grid
-- Implement real-time animated simulation
-- Add hyperparameter tuning dashboard
-- Deploy with agent count slider on Streamlit
-
----
-
-## 👩‍💼 About This Project
-
-This project was developed as part of an **academic major project** to demonstrate the application of Computational Intelligence in autonomous multi-agent systems.
-
-**Skills demonstrated:**
-- Swarm intelligence algorithm design
-- Object-oriented Python programming
-- Data visualization & simulation
-- Performance analysis & metrics tracking
-
----
-
-## 📬 Connect
-
- Anupa Lodhi
-- 🔗 LinkedIn: (https://www.linkedin.com/in/anupalodhi12a/)
-- 💻 GitHub: [github.com/AnupaLodhi](https://github.com/AnupaLodhi)
-
----
-
-> *This project is developed for academic and portfolio purposes to demonstrate Computational Intelligence concepts.*
+> *"None of us is as smart as all of us."* — Kenneth Blanchard  
+ developed for academic and portfolio purposes to demonstrate Computational Intelligence concepts.*
