@@ -6,9 +6,7 @@
 
 
 
-Live Demo
-
-[View Live Site](https://anupalodhi.github.io/swarm_intelligent/)]
+Live Demo [View Live Site](https://anupalodhi.github.io/swarm_intelligent/)]
 
 
 ## 📌 What Is Swarm Intelligence?
