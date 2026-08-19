@@ -2,7 +2,7 @@
 
 > A fully interactive, browser-based simulation of Swarm Intelligence using a Particle Swarm Optimization (PSO)-inspired algorithm on a 2D grid. Built with pure HTML, CSS, and JavaScript — no libraries, no frameworks.
 
-![Swarm Intelligence Demo](https://img.shields.io/badge/Demo-Live-brightgreen) ![Language](https://img.shields.io/badge/Language-HTML%20%2F%20JS-orange) ![Algorithm](https://img.shields.io/badge/Algorithm-PSO-blue) ![License](https://img.shields.io/badge/License-MIT-lightgrey)
+![Swarm Intelligence Demo]([https://img.shields.io/badge/Demo-Live-brightgreen](https://anupalodhi.github.io/swarm_simulation/)) ![Language](https://img.shields.io/badge/Language-HTML%20%2F%20JS-orange) ![Algorithm](https://img.shields.io/badge/Algorithm-PSO-blue) ![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
 
 
